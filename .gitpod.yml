@@ -3,4 +3,4 @@ image:
 
 tasks:
   - init: 'echo "TODO: Replace with init/build command"'
-    command: deno main.ts
+    command: deno run --allow-net main.ts
