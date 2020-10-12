@@ -4,3 +4,7 @@ image:
 tasks:
   - init: 'echo "TODO: Replace with init/build command"'
     command: deno run --allow-net main.ts
+
+vscode:
+  extensions:
+    - denoland.vscode-deno@2.3.1:EQc/TzIQd+H8BcYsPXTo/A==
