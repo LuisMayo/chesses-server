@@ -3,9 +3,10 @@ import {
   WebSocketServer,
 } from "https://deno.land/x/websocket@v0.0.5/mod.ts";
 import { IncomingMessage } from "./message.ts";
+import { GameState } from "./game-state.ts";
 
 const wss = new WebSocketServer(8080);
-const gameMap = new Map<string, WebSocket[]>();
+const gameMap = new Map<string, GameState>();
 wss.on("connection", function (ws: WebSocket) {
   let room: string;
   let type: string; // No, move to the gameMap
@@ -16,7 +17,7 @@ wss.on("connection", function (ws: WebSocket) {
         room = message.room;
         type = message.gameType;
         if (!gameMap.has(message.room)) {
-            gameMap.set(message.room, [ws]);
+            gameMap.set(message.room, new GameState(message.gameType, ws));
             ws.send(JSON.stringify({type: 'join', room, gameType: type}));
         } else {
             ws.send(JSON.stringify({type: 'error', error: 'Error while creating room'}));
@@ -24,8 +25,8 @@ wss.on("connection", function (ws: WebSocket) {
         break;
         case "join":
             room = message.room;
-            if (gameMap.has(message.room) && gameMap.get(message.room)?.length === 1) {
-                gameMap.get(message.room)?.push(ws);
+            if (gameMap.has(message.room) && !gameMap.get(message.room)?.roomFull) {
+                gameMap.get(message.room)?.registerPlayer(ws);
                 ws.send(JSON.stringify({type: 'join', room, gameType: type}));
             } else {
                 ws.send(JSON.stringify({type: 'error', error: 'Error while joining room'}));
