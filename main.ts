@@ -8,25 +8,27 @@ const wss = new WebSocketServer(8080);
 const gameMap = new Map<string, WebSocket[]>();
 wss.on("connection", function (ws: WebSocket) {
   let room: string;
+  let type: string; // No, move to the gameMap
   ws.on("message", function (str: string) {
     const message: IncomingMessage = JSON.parse(str);
     switch (message.type) {
       case "create":
-        room = message.payload;
-        if (!gameMap.has(message.payload)) {
-            gameMap.set(message.payload, [ws]);
-            ws.send(JSON.stringify({type: 'join', payload: room}));
+        room = message.room;
+        type = message.gameType;
+        if (!gameMap.has(message.room)) {
+            gameMap.set(message.room, [ws]);
+            ws.send(JSON.stringify({type: 'join', room, gameType: type}));
         } else {
-            ws.send(JSON.stringify({type: 'error', payload: 'Error while creating room'}));
+            ws.send(JSON.stringify({type: 'error', error: 'Error while creating room'}));
         }
         break;
         case "join":
-            room = message.payload;
-            if (gameMap.has(message.payload) && gameMap.get(message.payload)?.length === 1) {
-                gameMap.get(message.payload)?.push(ws);
-                ws.send(JSON.stringify({type: 'join', payload: room}));
+            room = message.room;
+            if (gameMap.has(message.room) && gameMap.get(message.room)?.length === 1) {
+                gameMap.get(message.room)?.push(ws);
+                ws.send(JSON.stringify({type: 'join', room, gameType: type}));
             } else {
-                ws.send(JSON.stringify({type: 'error', payload: 'Error while joining room'}));
+                ws.send(JSON.stringify({type: 'error', error: 'Error while joining room'}));
             }
             break;
         case "move":
