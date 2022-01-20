@@ -1,13 +1,13 @@
 import {
-  WebSocket,
+  WebSocketClient,
   WebSocketServer,
-} from "https://deno.land/x/websocket@v0.0.5/mod.ts";
+} from "https://deno.land/x/websocket@v0.1.3/mod.ts";
 import { IncomingMessage } from "./message.ts";
 import { GameState } from "./game-state.ts";
 
 const wss = new WebSocketServer(8080);
 const gameMap = new Map<string, GameState>();
-wss.on("connection", function (ws: WebSocket) {
+wss.on("connection", function (ws: WebSocketClient) {
   let room: string;
   let type: string; // No, move to the gameMap
   ws.on("message", function (str: string) {
@@ -26,14 +26,15 @@ wss.on("connection", function (ws: WebSocket) {
         case "join":
             room = message.room;
             if (gameMap.has(message.room) && !gameMap.get(message.room)?.roomFull) {
-                gameMap.get(message.room)?.registerPlayer(ws);
-                ws.send(JSON.stringify({type: 'join', room, gameType: type}));
+              const savedRoom = gameMap.get(message.room);
+                savedRoom?.registerPlayer(ws);
+                ws.send(JSON.stringify({type: 'join', room, gameType: savedRoom?.gameType}));
             } else {
                 ws.send(JSON.stringify({type: 'error', error: 'Error while joining room'}));
             }
             break;
         case "move":
-            const otherws = gameMap.get(room)?.find(socket => socket !== ws);
+            const otherws = gameMap.get(room)?.wslist.find(socket => socket !== ws);
             if (otherws) {
                 otherws.send(str);
             }
@@ -41,9 +42,9 @@ wss.on("connection", function (ws: WebSocket) {
     }
   });
   ws.on("close", () => {
-    const otherWs = gameMap.get(room)?.find(socket => socket !== ws);
+    const otherWs = gameMap.get(room)?.wslist.find(socket => socket !== ws);
     if (otherWs && !otherWs.isClosed) {
-        otherWs.close();
+        otherWs.close(0);
     }
     gameMap.delete(room);
   });

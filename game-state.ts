@@ -1,12 +1,14 @@
-import { WebSocket } from "https://deno.land/x/websocket@v0.0.5/mod.ts";
+import {
+    WebSocketClient,
+  } from "https://deno.land/x/websocket@v0.1.3/mod.ts";
 
 export class GameState {
-    private wslist: WebSocket[] = [];
-    constructor(public gameType: string, ws: WebSocket) {
+    public wslist: WebSocketClient[] = [];
+    constructor(public gameType: string, ws: WebSocketClient) {
         this.wslist.push(ws);
     }
 
-    registerPlayer(ws: WebSocket) {
+    registerPlayer(ws: WebSocketClient) {
         this.wslist.push(ws);
     }
 
